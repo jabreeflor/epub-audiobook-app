@@ -8,3 +8,5 @@ export { useTTSVoices } from './useTTSVoices';
 export { useLibrary } from './useLibrary';
 export type { LibraryBook } from './useLibrary';
 export { useOfflineStatus } from './useOfflineStatus';
+export { useBookmarks } from './useBookmarks';
+export type { Bookmark } from './useBookmarks';
