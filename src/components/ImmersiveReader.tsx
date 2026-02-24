@@ -7,6 +7,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Book, Chapter } from '@/types';
+import { ReaderAudioBar } from './ReaderAudioBar';
+import { BookmarkButton } from './BookmarkButton';
+import { BookmarksList } from './BookmarksList';
+import { useBookmarks } from '@/hooks/useBookmarks';
 
 interface ImmersiveReaderProps {
   book: Book;
@@ -27,8 +31,11 @@ export function ImmersiveReader({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [fontSize, setFontSize] = useState(18);
+  const [showBookmarks, setShowBookmarks] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const hideControlsTimeout = useRef<NodeJS.Timeout>();
+
+  const { bookmarks, toggleBookmark, removeBookmark, updateNote, hasBookmarkAt } = useBookmarks(book.id);
 
   const currentChapter = book.chapters[currentChapterIndex];
   const totalChapters = book.chapters.length;
@@ -159,7 +166,20 @@ export function ImmersiveReader({
             <p className="text-white/50 text-xs">{currentChapter.title}</p>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <BookmarkButton
+              isBookmarked={hasBookmarkAt(currentChapterIndex, scrollProgress)}
+              onToggle={() => toggleBookmark(currentChapterIndex, scrollProgress)}
+            />
+            <button
+              onClick={() => setShowBookmarks(true)}
+              className="p-2 text-white/60 hover:text-white transition-colors"
+              aria-label="View bookmarks"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+            </button>
             <button
               onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
               className="p-2 text-white/60 hover:text-white transition-colors"
@@ -234,6 +254,36 @@ export function ImmersiveReader({
           </div>
         </article>
       </main>
+
+      {/* Audio Bar */}
+      <ReaderAudioBar
+        chapter={currentChapter}
+        chapters={book.chapters}
+        currentChapterIndex={currentChapterIndex}
+        onChapterChange={goToChapter}
+      />
+
+      {/* Bookmarks Panel */}
+      {showBookmarks && (
+        <BookmarksList
+          bookmarks={bookmarks}
+          chapterTitles={book.chapters.map(c => c.title)}
+          onNavigate={(chIdx, scroll) => {
+            goToChapter(chIdx);
+            // Restore scroll position after chapter loads
+            setTimeout(() => {
+              if (contentRef.current) {
+                const { scrollHeight, clientHeight } = contentRef.current;
+                contentRef.current.scrollTop = scroll * (scrollHeight - clientHeight);
+              }
+            }, 100);
+            setShowBookmarks(false);
+          }}
+          onDelete={removeBookmark}
+          onUpdateNote={updateNote}
+          onClose={() => setShowBookmarks(false)}
+        />
+      )}
 
       {/* Bottom Bar - Chapter Navigation */}
       <footer 
