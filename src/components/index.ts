@@ -8,3 +8,5 @@ export { WaveformVisualizer, MiniWaveform } from './WaveformVisualizer';
 export { ChapterNavigation } from './ChapterNavigation';
 export { SettingsPanel, defaultAppSettings } from './SettingsPanel';
 export type { AppSettings } from './SettingsPanel';
+export { LibraryScreen } from './LibraryScreen';
+export type { LibraryBook } from './LibraryScreen';
