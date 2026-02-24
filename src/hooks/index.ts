@@ -7,3 +7,4 @@ export { useAppSettings } from './useAppSettings';
 export { useTTSVoices } from './useTTSVoices';
 export { useLibrary } from './useLibrary';
 export type { LibraryBook } from './useLibrary';
+export { useOfflineStatus } from './useOfflineStatus';
