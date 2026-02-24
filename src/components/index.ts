@@ -5,3 +5,4 @@ export type { ReaderSettingsValues } from './ReaderSettings';
 export { AudioControls } from './AudioControls';
 export { FloatingAudioPlayer } from './FloatingAudioPlayer';
 export { WaveformVisualizer, MiniWaveform } from './WaveformVisualizer';
+export { ChapterNavigation } from './ChapterNavigation';
