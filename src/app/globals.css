@@ -6,3 +6,69 @@ body {
   background-color: #0d1117;
   color: #e6edf3;
 }
+
+/* Custom animations */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Scrollbar styling for immersive reader */
+.reader-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.reader-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.reader-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.reader-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Theme overrides */
+.theme-dark {
+  --reader-bg: #0d1117;
+  --reader-text: #e6edf3;
+  --reader-text-muted: rgba(230, 237, 243, 0.7);
+}
+
+.theme-sepia {
+  --reader-bg: #f4ecd8;
+  --reader-text: #5b4636;
+  --reader-text-muted: rgba(91, 70, 54, 0.7);
+}
+
+.theme-light {
+  --reader-bg: #ffffff;
+  --reader-text: #1a1a1a;
+  --reader-text-muted: rgba(26, 26, 26, 0.7);
+}
