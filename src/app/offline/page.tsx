@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Offline Fallback Page - DEV-21
  * Shown when user is offline and page isn't cached
