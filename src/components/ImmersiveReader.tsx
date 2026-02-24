@@ -219,7 +219,10 @@ export function ImmersiveReader({
           </h2>
           
           <div className="text-white/85 leading-relaxed whitespace-pre-wrap">
-            {formatChapterContent(currentChapter.content)}
+            {currentChapter.content.trim().length > 0 
+              ? formatChapterContent(currentChapter.content)
+              : <p className="text-white/40 italic">No content available for this chapter.</p>
+            }
           </div>
           
           {/* End of chapter navigation */}

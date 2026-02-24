@@ -93,19 +93,77 @@ function flattenToc(toc: NavItem[], result: NavItem[] = []): NavItem[] {
  */
 async function extractChapterContent(book: EpubBook, href: string): Promise<string> {
   try {
-    // Get the section from the spine
-    const section = book.spine.get(href);
+    // Strip fragment identifier (#...) — spine lookup needs the base path only
+    const baseHref = href.split('#')[0];
+
+    // Try multiple approaches to find the section
+    let section = book.spine.get(baseHref);
     if (!section) {
+      // Try matching by the end of the href (relative path matching)
+      const spineItems = (book.spine as unknown as { items: Array<{ href: string; index: number }> }).items;
+      const match = spineItems.find(
+        (item) => item.href === baseHref || item.href.endsWith(baseHref) || baseHref.endsWith(item.href)
+      );
+      if (match) {
+        section = book.spine.get(match.index);
+      }
+    }
+
+    if (!section) {
+      console.warn(`[epub-parser] No spine section found for href: ${href}`);
       return '';
     }
-    
-    // Load the section content using the book's request function
-    const contents = await section.load(book.load.bind(book) as never);
-    
-    // Extract text content, stripping HTML tags
-    const text = extractTextFromHtml(contents as Document);
-    
-    return cleanText(text);
+
+    // Approach 1: Use section.load with book.load bound
+    try {
+      const contents = await section.load(book.load.bind(book) as never);
+      if (contents) {
+        const doc = contents as Document;
+        if (doc.body && doc.body.textContent && doc.body.textContent.trim().length > 0) {
+          return cleanText(doc.body.textContent);
+        }
+        // contents might be a string of HTML instead of a Document
+        if (typeof contents === 'string') {
+          const text = (contents as string).replace(/<[^>]*>/g, ' ');
+          if (text.trim().length > 0) return cleanText(text);
+        }
+      }
+    } catch (e) {
+      console.warn(`[epub-parser] section.load failed for ${href}, trying alternative`, e);
+    }
+
+    // Approach 2: Use book.load directly to fetch the raw resource
+    try {
+      const sectionHref = section.href || baseHref;
+      const raw = await (book.load(sectionHref) as unknown as Promise<string | Document>);
+      if (typeof raw === 'string') {
+        const text = raw.replace(/<[^>]*>/g, ' ');
+        if (text.trim().length > 0) return cleanText(text);
+      } else if (raw && typeof raw === 'object' && 'body' in raw) {
+        const text = (raw as Document).body?.textContent || '';
+        if (text.trim().length > 0) return cleanText(text);
+      }
+    } catch (e) {
+      console.warn(`[epub-parser] book.load fallback failed for ${href}`, e);
+    }
+
+    // Approach 3: Use the archive to read raw XML/HTML
+    try {
+      const archive = (book as unknown as { archive: { request: (url: string, type?: string) => Promise<string> } }).archive;
+      if (archive && archive.request) {
+        const sectionHref = section.href || (section as unknown as { canonical: string }).canonical || baseHref;
+        const html = await archive.request(sectionHref, 'string');
+        if (html) {
+          const text = html.replace(/<[^>]*>/g, ' ');
+          if (text.trim().length > 0) return cleanText(text);
+        }
+      }
+    } catch (e) {
+      console.warn(`[epub-parser] archive fallback failed for ${href}`, e);
+    }
+
+    console.warn(`[epub-parser] All extraction methods failed for ${href}`);
+    return '';
   } catch (error) {
     console.error(`Error extracting content for ${href}:`, error);
     return '';
@@ -123,8 +181,8 @@ async function extractChaptersFromSpine(book: EpubBook): Promise<Chapter[]> {
     const item = spine.items[i];
     const content = await extractChapterContent(book, item.href);
     
-    // Skip empty chapters or very short ones (likely front matter)
-    if (content.length < 100) continue;
+    // Skip completely empty chapters
+    if (content.length === 0) continue;
     
     chapters.push({
       id: `spine-${i}`,
